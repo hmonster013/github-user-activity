@@ -12,6 +12,18 @@ import java.util.List;
 
 public class UserActivityServiceImpl implements UserActivityService {
     private static final String BASE_URL = "https://api.github.com/users/{0}/events";
+    private final HttpClient httpClient;
+
+    public UserActivityServiceImpl() {
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
+    }
+
+    // Package-private constructor for testing
+    UserActivityServiceImpl(HttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
 
     @Override
     public void fetchUserActivity(String username) {
@@ -20,10 +32,6 @@ public class UserActivityServiceImpl implements UserActivityService {
 
     @Override
     public void fetchUserActivity(String username, String eventTypeFilter) {
-        HttpClient client = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(10))
-                .build();
-
         String url = BASE_URL.replace("{0}", username);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -34,7 +42,7 @@ public class UserActivityServiceImpl implements UserActivityService {
                 .build();
 
         try {
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             int status = response.statusCode();
             if (status == 200) {
